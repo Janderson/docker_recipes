@@ -1,0 +1,4 @@
+FROM mongo
+RUN mkdir /scripts
+ADD setup.sh /scripts
+ENTRYPOINT ["bash", "/scripts/setup.sh"]

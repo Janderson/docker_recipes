@@ -1,0 +1,80 @@
+version: '3'
+services:
+  mongo-setup:
+    container_name: mongo-setup
+    build:
+      dockerfile: docker_mongosetup
+      context: .
+    restart: on-failure
+    networks:
+      default:
+    entrypoint: [ "/scripts/setup.sh" ] # Make sure this file exists (see below for the setup.sh)
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+  
+  mongo1:
+    hostname: mongo1
+    container_name: localmongo1
+    image: mongo
+    expose:
+      - 27017
+    ports:
+      - 27017:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--enableMajorityReadConcern", "false" ]
+    volumes:
+      - db1_data:/data/db # This is where your volume will persist. e.g. VOLUME-DIR = ./volumes/mongodb
+      - db1_cfg:/data/configdb
+  mongo2:
+    hostname: mongo2
+    container_name: localmongo2
+    image: mongo
+    expose:
+      - 27017
+    ports:
+      - 27018:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--enableMajorityReadConcern", "false" ]
+    volumes:
+      - db2_data:/data/db # Note the data2, it must be different to the original set.
+      - db2_cfg:/data/configdb
+  mongo3:
+    hostname: mongo3
+    container_name: localmongo3
+    image: mongo
+    expose:
+      - 27017
+    ports:
+      - 27019:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--enableMajorityReadConcern", "false" ]
+    volumes:
+      - db3_data:/data/db
+      - db3_cfg:/data/configdb
+  
+  change_stream:
+    build:
+      dockerfile: docker_app
+      context: .
+    entrypoint: ["python", "/app/app.py", "change_stream"]
+    depends_on:
+      - mongo-setup
+
+  load_resource:
+    build:
+      dockerfile: docker_app
+      context: .
+    entrypoint: ["python", "/app/app.py", "load_resource"]
+    depends_on:
+      - mongo-setup
+
+volumes:
+    db1_data:
+    db1_cfg:
+    db2_data:
+    db2_cfg:
+    db3_data:
+    db3_cfg:
+      
