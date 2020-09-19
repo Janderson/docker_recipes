@@ -54,19 +54,11 @@ services:
       - db3_data:/data/db
       - db3_cfg:/data/configdb
   
-  change_stream:
+  app:
     build:
       dockerfile: docker_app
       context: .
-    entrypoint: ["python", "/app/app.py", "change_stream"]
-    depends_on:
-      - mongo-setup
-
-  load_resource:
-    build:
-      dockerfile: docker_app
-      context: .
-    entrypoint: ["python", "/app/app.py", "load_resource"]
+    entrypoint: ["python", "/app/app.py"]
     depends_on:
       - mongo-setup
 
