@@ -1,0 +1,2 @@
+sqlalchemy
+cx_Oracle
