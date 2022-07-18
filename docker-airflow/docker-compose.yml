@@ -1,0 +1,66 @@
+version: '3.7'
+services:
+    postgres:
+        image: postgres:9.6
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+        volumes: 
+            - pgdb_data:/var/lib/postgresql/data
+    webserver:
+        build:
+            context: "airflow"
+        restart: always
+        depends_on:
+            - postgres
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+        volumes:
+            - ./airflow/dags:/app/dags/
+            - ./airflow/logs/:/app/logs/
+            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/scripts/:/app/scripts/
+            - ./airflow/data/:/app/data/
+        ports:
+            - "8080:8080"
+        entrypoint: ["bash", "/app/scripts/web.sh"]
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    scheduler:
+        build:
+            context: "airflow"
+        entrypoint: ["bash", "/app/scripts/scheduler.sh"]
+        volumes: 
+            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/dags:/app/dags/
+            - ./airflow/logs/:/app/logs/
+            - ./airflow/scripts/:/app/scripts/
+            - ./airflow/data/:/app/data/
+        env_file:
+            - ./airflow/.dbenvs
+
+    bash:
+        build:
+            context: "airflow"
+        # entrypoint: "bash scripts/init.sh"
+        entrypoint: "bash"
+        volumes: 
+            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/dags:/app/dags/
+            - ./airflow/logs/:/app/logs/
+            - ./airflow/scripts/:/app/scripts/
+            - ./airflow/data/:/app/data/
+
+volumes:
+  pgdb_data:
