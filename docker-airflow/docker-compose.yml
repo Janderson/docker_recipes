@@ -12,6 +12,7 @@ services:
                 max-file: "3"
         volumes: 
             - pgdb_data:/var/lib/postgresql/data
+
     webserver:
         build:
             context: "airflow"
@@ -25,7 +26,7 @@ services:
         volumes:
             - ./airflow/dags:/app/dags/
             - ./airflow/logs/:/app/logs/
-            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/confs/airflow.cfg:/app/airflow.cfg
             - ./airflow/scripts/:/app/scripts/
             - ./airflow/data/:/app/data/
         ports:
@@ -42,7 +43,7 @@ services:
             context: "airflow"
         entrypoint: ["bash", "/app/scripts/scheduler.sh"]
         volumes: 
-            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/confs/airflow.cfg:/app/airflow.cfg
             - ./airflow/dags:/app/dags/
             - ./airflow/logs/:/app/logs/
             - ./airflow/scripts/:/app/scripts/
@@ -53,14 +54,23 @@ services:
     bash:
         build:
             context: "airflow"
-        # entrypoint: "bash scripts/init.sh"
-        entrypoint: "bash"
+        entrypoint: "bash scripts/init.sh"
         volumes: 
-            - ./airflow/airflow.cfg:/app/airflow.cfg
+            - ./airflow/confs/airflow.cfg:/app/airflow.cfg
             - ./airflow/dags:/app/dags/
             - ./airflow/logs/:/app/logs/
             - ./airflow/scripts/:/app/scripts/
             - ./airflow/data/:/app/data/
+
+    pgadmin:
+        image: dpage/pgadmin4
+        environment:
+            PGADMIN_DEFAULT_EMAIL: "email@host.com"
+            PGADMIN_DEFAULT_PASSWORD: "admin"
+        ports:
+        - "16543:80"
+        depends_on:
+        - postgres
 
 volumes:
   pgdb_data:
